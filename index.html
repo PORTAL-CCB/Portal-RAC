@@ -760,15 +760,16 @@ function categoriaTag(cat){
   const c = CATEGORIAS[cat] || CATEGORIAS.Aviso;
   return `<span class="tag" style="background:${c.cor}">${esc(cat.toUpperCase())}</span>`;
 }
-function targetOptionsHTML(){
+function targetOptionsHTML(selecionado){
   let out = "";
+  const sel = v => v===selecionado ? " selected" : "";
   if(session.scope==="regional"){
-    out += `<option value="regional|">Regional (todas as áreas)</option>`;
-    AREA_ORDER.forEach(a=> out += `<option value="area|${a}">Área inteira — ${a}</option>`);
+    out += `<option value="regional|"${sel("regional|")}>Regional (todas as áreas)</option>`;
+    AREA_ORDER.forEach(a=> out += `<option value="area|${a}"${sel("area|"+a)}>Área inteira — ${a}</option>`);
   } else if(session.scope==="area"){
-    out += `<option value="area|${session.key}">Área inteira — ${session.key}</option>`;
+    out += `<option value="area|${session.key}"${sel("area|"+session.key)}>Área inteira — ${session.key}</option>`;
   }
-  editableGTs().forEach(g=> out += `<option value="gt|${g}">${g}</option>`);
+  editableGTs().forEach(g=> out += `<option value="gt|${g}"${sel("gt|"+g)}>${g}</option>`);
   return out;
 }
 function canEditForItem(item){
@@ -990,7 +991,26 @@ function renderComunicacao(){
       </div>
     </form>` : "";
 
-  const cards = list.length ? list.map(c=>`
+  const cards = list.length ? list.map(c=>{
+    const editKey = "editComunicado_" + c.id;
+    if(openForms[editKey]){
+      return `
+      <form class="inline card" onsubmit="return salvarEdicaoComunicado(event,'${c.id}')">
+        <label>Publicar em</label>
+        <select id="ecTarget_${c.id}">${targetOptionsHTML(c.scope + "|" + (c.key||""))}</select>
+        <label>Categoria</label>
+        <select id="ecCategoria_${c.id}">${Object.keys(CATEGORIAS).map(cat=>`<option value="${cat}" ${cat===(c.categoria||"Aviso")?"selected":""}>${cat}</option>`).join("")}</select>
+        <label>Título</label>
+        <input id="ecTitulo_${c.id}" required maxlength="90" value="${esc(c.titulo)}">
+        <label>Mensagem</label>
+        <textarea id="ecTexto_${c.id}" required maxlength="900">${esc(c.texto)}</textarea>
+        <div class="form-actions">
+          <button class="btn btn-navy" type="submit">Salvar</button>
+          <button class="btn btn-ghost" type="button" onclick="toggleForm('${editKey}')">Cancelar</button>
+        </div>
+      </form>`;
+    }
+    return `
     <div class="card">
       <div class="row-between">
         <div style="display:flex;gap:6px;flex-wrap:wrap">${targetTag(c)}${categoriaTag(c.categoria)}</div>
@@ -1000,9 +1020,13 @@ function renderComunicacao(){
       <div class="post-body">${esc(c.texto)}</div>
       <div class="post-meta">
         <span>${esc(c.autor)} · ${c.data?fmtDataCurta(c.data):""}</span>
-        ${(!c.fixo && canEditForItem(c)) ? `<button class="btn btn-danger" style="padding:4px 9px;font-size:11px" onclick="excluirComunicado('${c.id}')">Excluir</button>`:""}
+        ${canEditForItem(c) ? `<span style="display:flex;gap:6px">
+          <button class="btn btn-ghost" style="padding:4px 9px;font-size:11px" onclick="toggleForm('${editKey}')">Editar</button>
+          ${!c.fixo ? `<button class="btn btn-danger" style="padding:4px 9px;font-size:11px" onclick="excluirComunicado('${c.id}')">Excluir</button>` : ""}
+        </span>` : ""}
       </div>
-    </div>`).join("") : `<div class="empty">Nenhum comunicado ainda neste filtro.</div>`;
+    </div>`;
+  }).join("") : `<div class="empty">Nenhum comunicado ainda neste filtro.</div>`;
 
   document.getElementById("main").innerHTML = `
     <div class="section-head"><h1>Comunicação</h1>
@@ -1020,6 +1044,21 @@ function criarComunicado(ev){
     autor: session.label, data: new Date().toISOString().slice(0,10), fixo:false});
   persist("rac_comunicados", state.comunicados);
   openForms.novoComunicado = false; renderMain(); return false;
+}
+function salvarEdicaoComunicado(ev, id){
+  ev.preventDefault();
+  const c = state.comunicados.find(x=>x.id===id);
+  if(!c) return false;
+  const [scope,key] = document.getElementById("ecTarget_"+id).value.split("|");
+  c.scope = scope; c.key = key || null;
+  c.categoria = document.getElementById("ecCategoria_"+id).value;
+  c.titulo = document.getElementById("ecTitulo_"+id).value.trim();
+  c.texto = document.getElementById("ecTexto_"+id).value.trim();
+  c.editadoPor = session.label;
+  c.editadoEm = new Date().toISOString().slice(0,10);
+  persist("rac_comunicados", state.comunicados);
+  openForms["editComunicado_"+id] = false;
+  renderMain(); return false;
 }
 function excluirComunicado(id){
   if(!confirm("Excluir este comunicado?")) return;
