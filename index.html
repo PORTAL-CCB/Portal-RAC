@@ -254,7 +254,18 @@
     .hero{padding:20px 16px;}
     .hero h1{font-size:19px;}
   }
+  .quill-editor{background:#fff;}
+  .quill-editor .ql-toolbar{border:2px solid var(--line);border-bottom:none;border-radius:10px 10px 0 0;
+    background:var(--light);font-family:Verdana,Geneva,sans-serif;}
+  .quill-editor .ql-container{border:2px solid var(--line);border-radius:0 0 10px 10px;
+    font-family:Verdana,Geneva,sans-serif;font-size:13px;min-height:120px;}
+  .quill-editor .ql-editor{min-height:120px;}
+  .quill-editor:focus-within .ql-toolbar,.quill-editor:focus-within .ql-container{border-color:var(--navy);}
+  .post-body a{color:var(--navy);font-weight:bold;text-decoration:underline;}
+  .post-body ul,.post-body ol{margin:6px 0;padding-left:22px;}
 </style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.snow.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 </head>
@@ -876,11 +887,14 @@ function renderInicio(){
         <div class="sub"><span class="tag" style="background:${meta.cor}">${meta.sigla}</span>&nbsp;${meta.nome}</div></div></div>`;
     }).join("") : `<div class="empty">Nenhum compromisso futuro cadastrado.</div>`}
     <div class="subhead">Últimos comunicados</div>
-    ${recentes.length ? recentes.map(c=>`
+    ${recentes.length ? recentes.map(c=>{
+      const textoPuro = c.texto.replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim();
+      const resumo = textoPuro.length>180 ? textoPuro.slice(0,180)+"…" : textoPuro;
+      return `
       <div class="card"><div class="row-between">${targetTag(c)}</div>
       <div class="post-title">${esc(c.titulo)}</div>
-      <div class="post-body">${esc(c.texto.length>180?c.texto.slice(0,180)+"…":c.texto)}</div></div>
-    `).join("") : `<div class="empty">Nenhum comunicado publicado ainda.</div>`}
+      <div class="post-body">${esc(resumo)}</div></div>`;
+    }).join("") : `<div class="empty">Nenhum comunicado publicado ainda.</div>`}
   `;
 }
 
@@ -955,6 +969,27 @@ function renderSobre(){
 }
 
 /* ============================================================ COMUNICAÇÃO */
+/* ---- editor de texto rico (Quill), usado só no corpo do comunicado ---- */
+const quillInstances = {};
+const QUILL_TOOLBAR = [["bold","italic","underline"],[{list:"ordered"},{list:"bullet"}],["link"],["clean"]];
+function initQuill(containerId, initialHTML){
+  if(typeof Quill === "undefined") return null;
+  const q = new Quill("#"+containerId, {theme:"snow", modules:{toolbar:QUILL_TOOLBAR}, placeholder:"Escreva o comunicado..."});
+  if(initialHTML) q.root.innerHTML = initialHTML;
+  quillInstances[containerId] = q;
+  return q;
+}
+function quillHTML(containerId){
+  const q = quillInstances[containerId];
+  if(!q) return "";
+  const empty = q.getText().trim().length === 0;
+  if(empty) return "";
+  let html = q.root.innerHTML;
+  // garante que todo link abre em nova aba
+  html = html.replace(/<a href=/g, '<a target="_blank" rel="noopener" href=');
+  return html;
+}
+
 function renderComunicacao(){
   const list = state.comunicados
     .filter(c => !filtroMuralGT || c.key===filtroMuralGT)
@@ -984,7 +1019,8 @@ function renderComunicacao(){
       <label>Título</label>
       <input id="cTitulo" required maxlength="90" placeholder="Ex.: Prazo para envio do plano de ação">
       <label>Mensagem</label>
-      <textarea id="cTexto" required maxlength="900" placeholder="Escreva o comunicado..."></textarea>
+      <div id="cTextoEditor" class="quill-editor"></div>
+      <div class="muted" style="margin-top:5px">Use o ícone de corrente para colar um link — quem clicar abre em nova aba.</div>
       <div class="form-actions">
         <button class="btn btn-navy" type="submit">Publicar</button>
         <button class="btn btn-ghost" type="button" onclick="toggleForm('novoComunicado')">Cancelar</button>
@@ -993,6 +1029,7 @@ function renderComunicacao(){
 
   const cards = list.length ? list.map(c=>{
     const editKey = "editComunicado_" + c.id;
+    const editorId = "ecTextoEditor_" + c.id;
     if(openForms[editKey]){
       return `
       <form class="inline card" onsubmit="return salvarEdicaoComunicado(event,'${c.id}')">
@@ -1003,7 +1040,7 @@ function renderComunicacao(){
         <label>Título</label>
         <input id="ecTitulo_${c.id}" required maxlength="90" value="${esc(c.titulo)}">
         <label>Mensagem</label>
-        <textarea id="ecTexto_${c.id}" required maxlength="900">${esc(c.texto)}</textarea>
+        <div id="${editorId}" class="quill-editor"></div>
         <div class="form-actions">
           <button class="btn btn-navy" type="submit">Salvar</button>
           <button class="btn btn-ghost" type="button" onclick="toggleForm('${editKey}')">Cancelar</button>
@@ -1017,7 +1054,7 @@ function renderComunicacao(){
         ${c.fixo?'<span class="pin">FIXADO</span>':""}
       </div>
       <div class="post-title">${esc(c.titulo)}</div>
-      <div class="post-body">${esc(c.texto)}</div>
+      <div class="post-body">${c.texto}</div>
       <div class="post-meta">
         <span>${esc(c.autor)} · ${c.data?fmtDataCurta(c.data):""}</span>
         ${canEditForItem(c) ? `<span style="display:flex;gap:6px">
@@ -1032,17 +1069,23 @@ function renderComunicacao(){
     <div class="section-head"><h1>Comunicação</h1>
       <p>Avisos, prazos e recados dos coordenadores. Fixados aparecem sempre no topo.</p></div>
     ${filterHTML}${addBtn}${form}${cards}`;
+
+  if(canPost && openForms.novoComunicado) initQuill("cTextoEditor");
+  list.forEach(c=>{
+    if(openForms["editComunicado_"+c.id]) initQuill("ecTextoEditor_"+c.id, c.texto);
+  });
 }
 function criarComunicado(ev){
   ev.preventDefault();
   const [scope,key] = document.getElementById("cTarget").value.split("|");
   const categoria = document.getElementById("cCategoria").value;
   const titulo = document.getElementById("cTitulo").value.trim();
-  const texto = document.getElementById("cTexto").value.trim();
+  const texto = quillHTML("cTextoEditor");
   if(!titulo || !texto) return false;
   state.comunicados.unshift({id:"m"+Date.now(), scope, key: key||null, categoria, titulo, texto,
     autor: session.label, data: new Date().toISOString().slice(0,10), fixo:false});
   persist("rac_comunicados", state.comunicados);
+  delete quillInstances["cTextoEditor"];
   openForms.novoComunicado = false; renderMain(); return false;
 }
 function salvarEdicaoComunicado(ev, id){
@@ -1053,10 +1096,11 @@ function salvarEdicaoComunicado(ev, id){
   c.scope = scope; c.key = key || null;
   c.categoria = document.getElementById("ecCategoria_"+id).value;
   c.titulo = document.getElementById("ecTitulo_"+id).value.trim();
-  c.texto = document.getElementById("ecTexto_"+id).value.trim();
+  c.texto = quillHTML("ecTextoEditor_"+id);
   c.editadoPor = session.label;
   c.editadoEm = new Date().toISOString().slice(0,10);
   persist("rac_comunicados", state.comunicados);
+  delete quillInstances["ecTextoEditor_"+id];
   openForms["editComunicado_"+id] = false;
   renderMain(); return false;
 }
