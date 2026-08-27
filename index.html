@@ -66,6 +66,13 @@
     color:#CFE0EE;padding:10px 11px;border-radius:8px;font-family:inherit;font-size:13px;
     font-weight:bold;text-align:left;cursor:pointer;border-left:3px solid transparent;}
   #siteNav button svg{flex:none;width:18px;height:18px;opacity:.85;}
+  .navbadge{margin-left:auto;background:var(--orange);color:#fff;font-size:10px;font-weight:bold;
+    border-radius:20px;padding:1px 7px;flex:none;}
+  .novo-badge{display:inline-block;background:var(--orange);color:#fff;font-size:9.5px;font-weight:bold;
+    border-radius:20px;padding:2px 8px;letter-spacing:.03em;}
+  .relativo-hoje{background:var(--orange);color:#fff;}
+  .relativo-tag{display:inline-block;font-size:10px;font-weight:bold;border-radius:20px;padding:2px 8px;
+    margin-left:6px;background:var(--gold-bg);color:#7a5a00;}
   #siteNav button:hover{background:rgba(255,255,255,.08);}
   #siteNav button.active{background:rgba(255,255,255,.13);color:#fff;border-left-color:var(--gold);}
   #siteNav button.active svg{opacity:1;}
@@ -373,7 +380,8 @@ const CODES = {
   "DIS-119": {scope:"gt", key:"DISTRIBUIDORA", label:"GT Distribuidora"},
   "TES-120": {scope:"gt", key:"TESOURARIA", label:"GT Tesouraria"},
   "CNS-121": {scope:"gt", key:"CNS", label:"GT CNS"},
-  "CMP-122": {scope:"gt", key:"COMPRAS", label:"GT Compras"}
+  "CMP-122": {scope:"gt", key:"COMPRAS", label:"GT Compras"},
+  "SAU-123": {scope:"gt", key:"SAÚDE", label:"GT Saúde"}
 };
 
 const COMPARECEM_RA = "Anciães e Diáconos que acompanham as administrações, Administradores Titulares, "+
@@ -451,10 +459,10 @@ const SEED_CALENDARIO = [
  ["2026-08-08","RRM","Reunião Regional Ministerial",null],
  ["2026-08-26","GT-ON","Coordenadores dos GTs",null],
  ["2026-08-30","VP","Verificação Presencial — Nova Odessa",null],
- ["2026-09-10","VO","Verificação Online — Hortolândia",null],
- ["2026-09-14","VO","Verificação Online — Monte Mor",null],
+ ["2026-09-10","VO","Verificação Online — Sumaré",null],
+ ["2026-09-14","VO","Verificação Online — Hortolândia",null],
  ["2026-09-20","DOC","Documentação para análise da RA",null],
- ["2026-09-23","VO","Verificação Online — Sumaré",null],
+ ["2026-09-23","VO","Verificação Online — Monte Mor",null],
  ["2026-09-30","GT-PRE","Coordenadores dos GTs",null],
  ["2026-10-04","RA","Reunião da Regional Administrativa",null],
  ["2026-10-05","VO","Verificação Online — Indaiatuba",null],
@@ -617,7 +625,7 @@ const SEED_MEMBROS_RAW = [
 ["Murilo Cássio Agorreta","PATR. BENS IMÓVEIS",0,"Paulínia"],
 ["Odil de Caxias","PATR. BENS IMÓVEIS",1,"Indaiatuba"],
 ["Rogério Rocha Soares","PATR. BENS IMÓVEIS",0,"Hortolândia"],
-["Silvana Benjamin Deodato","SAÚDE",0,"Hortolândia"],
+["Silvana Benjamin Deodato","SAÚDE",1,"Hortolândia"],
 ["Ariadne Bastos da Silva Resende","SEGURANÇA",0,"Vinhedo"],
 ["Helton Henrique Alexandre","SEGURANÇA",0,"Sumaré"],
 ["Josimar Pereira Batista","SEGURANÇA",1,"Campinas"],
@@ -756,6 +764,38 @@ function canAccessCoordenacao(){ return session && (session.scope==="regional" |
 
 /* ============================================================ HELPERS */
 function esc(s){return (s||"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+
+/* ---- "novo desde sua última visita" (local ao navegador, sem servidor) ---- */
+let ULTIMA_VISITA_ANTERIOR = 0;
+function getUltimaVisitaAnterior(){
+  try{
+    const v = localStorage.getItem("rac_ultima_visita");
+    return v ? parseInt(v, 10) : 0;
+  }catch(e){ return 0; }
+}
+function salvarVisitaAgora(){
+  try{ localStorage.setItem("rac_ultima_visita", String(Date.now())); }catch(e){}
+}
+function itemTimestamp(c){
+  if(c.ts) return c.ts;
+  const d = Date.parse((c.data||"1970-01-01") + "T12:00:00");
+  return isNaN(d) ? 0 : d;
+}
+function ehNovo(c){
+  return ULTIMA_VISITA_ANTERIOR > 0 && itemTimestamp(c) > ULTIMA_VISITA_ANTERIOR;
+}
+function contarComunicadosNovos(){
+  return state.comunicados.filter(ehNovo).length;
+}
+function rotuloRelativo(dataISO){
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const d = new Date(dataISO + "T00:00:00");
+  const dias = Math.round((d - hoje) / 86400000);
+  if(dias === 0) return {texto:"Hoje", urgente:true};
+  if(dias === 1) return {texto:"Amanhã", urgente:true};
+  if(dias > 1 && dias <= 6) return {texto:`Em ${dias} dias`, urgente:false};
+  return null;
+}
 function fmtData(iso){ const [y,m,d]=iso.split("-"); return {d, m:MESES[parseInt(m,10)-1], y}; }
 function fmtDataCurta(iso){ const {d,m,y}=fmtData(iso); return `${d}/${m}/${y}`; }
 function targetTag(item){
@@ -827,8 +867,10 @@ function renderNav(){
     ["calendario","Calendário"],["grupos","Grupos de Trabalho"],["reunioes","Reuniões"],
     ["biblioteca","Biblioteca"],["coordenacao","Coordenação Geral"],
     ["consideracoes","Considerações e Aprovações"]];
+  const novosCom = contarComunicadosNovos();
   document.getElementById("siteNav").innerHTML = pages.map(([id,label])=>
-    `<button class="${activePage===id?'active':''}" onclick="goPage('${id}')">${icon(id)}<span>${label}</span></button>`
+    `<button class="${activePage===id?'active':''}" onclick="goPage('${id}')">${icon(id)}<span>${label}</span>
+     ${(id==="comunicacao" && novosCom>0) ? `<span class="navbadge">${novosCom}</span>` : ""}</button>`
   ).join("");
 }
 function toggleSidebar(){
@@ -861,6 +903,7 @@ function renderInicio(){
   const proximos = state.calendario.slice().sort((a,b)=>a.data.localeCompare(b.data))
     .filter(e=>e.data>=hoje).slice(0,3);
   const recentes = state.comunicados.slice().sort((a,b)=>(b.data||"").localeCompare(a.data||"")).slice(0,2);
+  const novosCom = contarComunicadosNovos();
 
   document.getElementById("main").innerHTML = `
     <div class="hero">
@@ -873,6 +916,11 @@ function renderInicio(){
         <div class="stat"><b>${state.membros.length}</b><span>Membros ativos</span></div>
       </div>
     </div>
+    ${novosCom>0 ? `<div class="card light" style="border-left:4px solid var(--orange);margin-bottom:14px">
+      <strong style="color:var(--orange)">${novosCom} comunicado${novosCom>1?'s':''} novo${novosCom>1?'s':''}</strong>
+      <span class="muted"> desde sua última visita —</span>
+      <a href="#" onclick="goPage('comunicacao');return false;" style="font-weight:bold;color:var(--navy)">ver no mural</a>
+    </div>` : ""}
     <div class="quicklinks">
       <button class="btn btn-navy" onclick="goPage('comunicacao')">Ver comunicados</button>
       <button class="btn btn-navy" onclick="goPage('calendario')">Ver calendário</button>
@@ -881,9 +929,10 @@ function renderInicio(){
     <div class="subhead">Próximos compromissos</div>
     ${proximos.length ? proximos.map(ev=>{
       const {d,m}=fmtData(ev.data); const meta=TIPOS[ev.tipo]||TIPOS.OUTRO;
-      return `<div class="event"><div class="date" style="background:${meta.cor}22">
-        <span class="d" style="color:${meta.cor}">${d}</span><span class="m">${m}</span></div>
-        <div class="body"><div class="ttl">${esc(ev.titulo)}</div>
+      const rel = rotuloRelativo(ev.data);
+      return `<div class="event"><div class="date" style="background:${rel&&rel.urgente?'var(--orange)':meta.cor+'22'}">
+        <span class="d" style="color:${rel&&rel.urgente?'#fff':meta.cor}">${d}</span><span class="m" style="${rel&&rel.urgente?'color:#fff':''}">${m}</span></div>
+        <div class="body"><div class="ttl">${esc(ev.titulo)}${rel?`<span class="relativo-tag${rel.urgente?' relativo-hoje':''}">${rel.texto}</span>`:''}</div>
         <div class="sub"><span class="tag" style="background:${meta.cor}">${meta.sigla}</span>&nbsp;${meta.nome}</div></div></div>`;
     }).join("") : `<div class="empty">Nenhum compromisso futuro cadastrado.</div>`}
     <div class="subhead">Últimos comunicados</div>
@@ -891,7 +940,8 @@ function renderInicio(){
       const textoPuro = c.texto.replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim();
       const resumo = textoPuro.length>180 ? textoPuro.slice(0,180)+"…" : textoPuro;
       return `
-      <div class="card"><div class="row-between">${targetTag(c)}</div>
+      <div class="card" style="${ehNovo(c)?'border-left:4px solid var(--orange)':''}">
+      <div class="row-between">${targetTag(c)}${ehNovo(c)?'<span class="novo-badge">NOVO</span>':''}</div>
       <div class="post-title">${esc(c.titulo)}</div>
       <div class="post-body">${esc(resumo)}</div></div>`;
     }).join("") : `<div class="empty">Nenhum comunicado publicado ainda.</div>`}
@@ -996,6 +1046,12 @@ function renderComunicacao(){
     .filter(c => !filtroMuralCat || (c.categoria||"Aviso")===filtroMuralCat)
     .slice().sort((a,b)=> (b.fixo===a.fixo? (b.data||"").localeCompare(a.data||"") : (b.fixo?1:-1)));
 
+  const totalNovos = contarComunicadosNovos();
+  const avisoNovos = totalNovos > 0
+    ? `<div class="card light" style="border-left:4px solid var(--orange);margin-bottom:12px">
+        <strong style="color:var(--orange)">${totalNovos} comunicado${totalNovos>1?'s':''} novo${totalNovos>1?'s':''}</strong>
+        <span class="muted"> desde sua última visita.</span></div>` : "";
+
   const filterHTML = `
     <div class="filterbar">
       <select onchange="filtroMuralGT=this.value; renderMain()">
@@ -1048,9 +1104,9 @@ function renderComunicacao(){
       </form>`;
     }
     return `
-    <div class="card">
+    <div class="card" style="${ehNovo(c)?'border-left:4px solid var(--orange)':''}">
       <div class="row-between">
-        <div style="display:flex;gap:6px;flex-wrap:wrap">${targetTag(c)}${categoriaTag(c.categoria)}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">${targetTag(c)}${categoriaTag(c.categoria)}${ehNovo(c)?'<span class="novo-badge">NOVO</span>':''}</div>
         ${c.fixo?'<span class="pin">FIXADO</span>':""}
       </div>
       <div class="post-title">${esc(c.titulo)}</div>
@@ -1068,7 +1124,7 @@ function renderComunicacao(){
   document.getElementById("main").innerHTML = `
     <div class="section-head"><h1>Comunicação</h1>
       <p>Avisos, prazos e recados dos coordenadores. Fixados aparecem sempre no topo.</p></div>
-    ${filterHTML}${addBtn}${form}${cards}`;
+    ${avisoNovos}${filterHTML}${addBtn}${form}${cards}`;
 
   if(canPost && openForms.novoComunicado) initQuill("cTextoEditor");
   list.forEach(c=>{
@@ -1083,7 +1139,7 @@ function criarComunicado(ev){
   const texto = quillHTML("cTextoEditor");
   if(!titulo || !texto) return false;
   state.comunicados.unshift({id:"m"+Date.now(), scope, key: key||null, categoria, titulo, texto,
-    autor: session.label, data: new Date().toISOString().slice(0,10), fixo:false});
+    autor: session.label, data: new Date().toISOString().slice(0,10), ts: Date.now(), fixo:false});
   persist("rac_comunicados", state.comunicados);
   delete quillInstances["cTextoEditor"];
   openForms.novoComunicado = false; renderMain(); return false;
@@ -1861,6 +1917,7 @@ function loadSeedOnly(){
     membros:SEED_MEMBROS, reunioes:SEED_REUNIOES, pauta:SEED_PAUTA};
 }
 async function init(){
+  ULTIMA_VISITA_ANTERIOR = getUltimaVisitaAnterior();
   renderHeader();
   renderNav();
   initFirebase();
@@ -1887,6 +1944,8 @@ async function init(){
   }
   clearTimeout(failSafe);
   renderMain();
+  renderNav(); // reaplica o menu já com o indicador de novidades, agora que os dados chegaram
+  salvarVisitaAgora();
 }
 init();
 </script>
