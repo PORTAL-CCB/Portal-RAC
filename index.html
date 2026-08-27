@@ -814,8 +814,10 @@ function categoriaTag(cat){
 function targetOptionsHTML(selecionado){
   let out = "";
   const sel = v => v===selecionado ? " selected" : "";
-  if(session.scope==="regional"){
+  if(session.scope==="regional" || session.scope==="coordenacao"){
     out += `<option value="regional|"${sel("regional|")}>Regional (todas as áreas)</option>`;
+  }
+  if(session.scope==="regional"){
     AREA_ORDER.forEach(a=> out += `<option value="area|${a}"${sel("area|"+a)}>Área inteira — ${a}</option>`);
   } else if(session.scope==="area"){
     out += `<option value="area|${session.key}"${sel("area|"+session.key)}>Área inteira — ${session.key}</option>`;
@@ -825,7 +827,7 @@ function targetOptionsHTML(selecionado){
 }
 function canEditForItem(item){
   if(!session) return false;
-  if(item.scope==="regional") return session.scope==="regional";
+  if(item.scope==="regional") return session.scope==="regional" || session.scope==="coordenacao";
   if(item.scope==="area") return canPostArea(item.key);
   return canEditGT(item.key);
 }
