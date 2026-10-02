@@ -278,7 +278,10 @@
 </head>
 <body>
 
-<div class="layout">
+<!-- Tela de login/cadastro por e-mail fica guardada para retomar depois, se decidirem usar:
+     ver nota em /mnt/user-data/outputs/README.md ou pedir ao Claude a versão com autenticação. -->
+
+<div class="layout" id="appLayout">
   <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
@@ -553,119 +556,17 @@ const SEED_REUNIOES = [
    link:"", autor:"Eliel Granado", materiais:[]}
 ];
 
-const SEED_TAREFAS = [];
-
 const SEED_COMUNICADOS = [
   {id:"m0", scope:"regional", key:null,
    titulo:"Bem-vindo ao Portal RAC",
    texto:"Este é o novo espaço de comunicação dos Grupos de Trabalho da Regional Administrativa de Campinas. "+
    "Cada coordenador pode publicar avisos, prazos e demandas da sua área diretamente aqui. "+
-   "Consulte o calendário de reuniões e verificações, acompanhe as pendências do seu GT em Grupos de Trabalho, "+
-   "e o histórico de reuniões regionais na página Reuniões.",
+   "Consulte o calendário de reuniões e verificações, e os materiais na Biblioteca.",
    autor:"Eliel Granado — Coordenador da Regional", data:new Date().toISOString().slice(0,10), fixo:true}
 ];
 
-const SEED_MEMBROS_RAW = [
-["Eliezer Bezerra","ANCIÃES",1,"Campinas"],
-["José Alves Ferreira","ANCIÃES",0,"Indaiatuba"],
-["Luciano Justino Pires","ANCIÃES",0,"Vinhedo"],
-["Ederson Cervoni","DIÁCONOS",0,"Sumaré"],
-["Edson Camillo","DIÁCONOS",1,"Campinas"],
-["Edson de Lima","DIÁCONOS",0,"Campinas"],
-["Gláucio Bernardino de Souza","DIÁCONOS",0,"Indaiatuba"],
-["Hebert Cleuto de Melo","DIÁCONOS",0,"Hortolândia"],
-["José Lenilson Moura","DIÁCONOS",0,"Vinhedo"],
-["Marcio Damasceno","DIÁCONOS",0,"Campinas"],
-["Nelson Teodoro da Silva","DIÁCONOS",0,"Paulínia"],
-["Romeci Joaquim de Sales","CONSELHO FISCAL",0,"Vinhedo"],
-["Sergio Moacyr Ragusa","CONSELHO FISCAL",1,"Indaiatuba"],
-["Wokimar Teixeira Garcia","CONSELHO FISCAL",0,"Campinas"],
-["Caio Cesar Anelli","INFORMÁTICA",0,"Valinhos"],
-["Eliézer Zarpelão","INFORMÁTICA",0,"Paulínia"],
-["Fabio Alvea Moreira","INFORMÁTICA",0,"Campinas"],
-["Jhonny Bernal Moreno","INFORMÁTICA",1,"Monte Mor"],
-["Rafael Martins","INFORMÁTICA",0,"Paulínia"],
-["Airto Peres","JURÍDICO",0,"Campinas"],
-["Alaor Luis Prado","JURÍDICO",0,"Hortolândia"],
-["Armando Guaracy França","JURÍDICO",0,"Indaiatuba"],
-["Emerson Silva de Oliveira","JURÍDICO",0,"Campinas"],
-["Helder de Oliveira","JURÍDICO",0,"Campinas"],
-["Luiz Carlos Grippi","JURÍDICO",0,"Campinas"],
-["Odair Leal Serotini","JURÍDICO",1,"Campinas"],
-["Pedro Barbosa","JURÍDICO",0,"Monte Mor"],
-["Eliézer Zarpelão","LGPD",1,"Paulínia"],
-["Isac Primo Nogueira","PRESIDÊNCIA",0,"Vinhedo"],
-["Marcelo Eduardo de Mendonça","PRESIDÊNCIA",0,"Campinas"],
-["Marcos Rogério D Amsto","PRESIDÊNCIA",0,"Vinhedo"],
-["Nilson da Silveira","PRESIDÊNCIA",1,"Paulínia"],
-["Nilton Cesar Zeferino","PRESIDÊNCIA",1,"Hortolândia"],
-["Daniel Vieira","SECRETARIA",0,"Paulínia"],
-["Joao Batista da Silva","SECRETARIA",0,"Campinas"],
-["Luis Dias Mota Junior","SECRETARIA",0,"Campinas"],
-["Marcos Andrade","SECRETARIA",0,"Campinas"],
-["Samuel Barreiro Lino","SECRETARIA",1,"Hortolândia"],
-["Marcos Andrade","VERIFICAÇÃO",1,"Campinas"],
-["Cornelio Nogueira Ferreira","ATIVIDADE VOLUNTÁRIA",1,"Campinas"],
-["David Rosa da Silva","ATIVIDADE VOLUNTÁRIA",0,"Campinas"],
-["Marcelo Mendes de Souza","ATIVIDADE VOLUNTÁRIA",0,"Campinas"],
-["Sérgio Paulo dos Santos Junior","ATIVIDADE VOLUNTÁRIA",0,"Indaiatuba"],
-["Daniel Leal Campos","ENGENHARIA",0,"Campinas"],
-["Gabriel M. de Jesus Sousa Cedro","ENGENHARIA",0,""],
-["Kleuber José dos Santos","ENGENHARIA",1,"Campinas"],
-["Sarah Cristie Sousa Xavier","ENGENHARIA",0,""],
-["Wellington do Carmo Tosta","ENGENHARIA",0,""],
-["Everton Samuel Oliveira Nascimento","MANUT. PREVENTIVA",1,"Campinas"],
-["Salomão Soares Lima","MANUT. PREVENTIVA",0,"Sumaré"],
-["Thiago Capeleto","MANUT. PREVENTIVA",0,"Monte Mor"],
-["Wellington Costa Leite","MANUT. PREVENTIVA",0,"Campinas"],
-["Araceli Silva Cintrao Agorreta","PATR. BENS IMÓVEIS",0,"Paulínia"],
-["Carlos Afonso Barreto Alves","PATR. BENS IMÓVEIS",0,"Sumaré"],
-["Eneias Rodrigues Machado","PATR. BENS IMÓVEIS",0,"Campinas"],
-["Márcio Roberto Amoroso","PATR. BENS IMÓVEIS",0,"Indaiatuba"],
-["Murilo Cássio Agorreta","PATR. BENS IMÓVEIS",0,"Paulínia"],
-["Odil de Caxias","PATR. BENS IMÓVEIS",1,"Indaiatuba"],
-["Rogério Rocha Soares","PATR. BENS IMÓVEIS",0,"Hortolândia"],
-["Silvana Benjamin Deodato","SAÚDE",1,"Hortolândia"],
-["Ariadne Bastos da Silva Resende","SEGURANÇA",0,"Vinhedo"],
-["Helton Henrique Alexandre","SEGURANÇA",0,"Sumaré"],
-["Josimar Pereira Batista","SEGURANÇA",1,"Campinas"],
-["Marcelo Juvêncio de Queiroz Malcides","SEGURANÇA",0,"Sumaré"],
-["Valteno Vieira Roque","SEGURANÇA",0,"Indaiatuba"],
-["Vicente Cipriano da Cruz Neto","SEGURANÇA",0,"Valinhos"],
-["Anderson Alves Ferreira","ATIVO IMOBILIZADO",0,"Indaiatuba"],
-["Isaías da Silva","ATIVO IMOBILIZADO",1,"Indaiatuba"],
-["Jackson Gomes Passos","ATIVO IMOBILIZADO",0,"Campinas"],
-["Marcos Dias de Jesus","ATIVO IMOBILIZADO",0,"Campinas"],
-["Nayara Franco do Nascimento","ATIVO IMOBILIZADO",0,"Campinas"],
-["Paulo César Faria","ATIVO IMOBILIZADO",0,"Hortolândia"],
-["Gerson Malandrin","CNS",1,"Campinas"],
-["Sidinei Silva Costa Junior","CNS",1,"Indaiatuba"],
-["Joel Luiz Andrade","COMPRAS",0,"Paulínia"],
-["Luiz Henrique Mascaro de Mendonça","COMPRAS",1,"Campinas"],
-["Pedro Roberto","COMPRAS",0,"Monte Mor"],
-["José Carlos de Souza Gama","COMPRAS",0,"Monte Mor"],
-["Eder Henrique da Silva","CONTABILIDADE E FISCAL",1,"Sumaré"],
-["Eliel Granado","CONTABILIDADE E FISCAL",0,"Indaiatuba"],
-["Josiane Ferreira de Azevedo Cardoso","CONTABILIDADE E FISCAL",0,"Vinhedo"],
-["Nabor Ferreira da Silva","CONTABILIDADE E FISCAL",0,"Campinas"],
-["Sandrival Nogueira de Matos","CONTABILIDADE E FISCAL",0,"Sumaré"],
-["Rubens Leite da Silva Filho","DISTRIBUIDORA",0,"Campinas"],
-["Sandro Roberto Pereira","DISTRIBUIDORA",0,""],
-["Rubens Leite da Silva","DISTRIBUIDORA",1,"Campinas"],
-["Sidney Gonçalves Bezerra","DISTRIBUIDORA",0,"Sumaré"],
-["Vagner Borges Lauwstew da Silva","DISTRIBUIDORA",0,"Sumaré"],
-["Cláudio Gomes Pinho","TESOURARIA",0,"Indaiatuba"],
-["Gerson Zarpelão","TESOURARIA",0,"Paulínia"],
-["Jésus Baptista de Oliveira Junior","TESOURARIA",0,"Monte Mor"],
-["Juvenal Morandi Campos","TESOURARIA",0,"Paulínia"],
-["Milton Pasquim de Lima","TESOURARIA",1,"Indaiatuba"],
-];
-const SEED_MEMBROS = SEED_MEMBROS_RAW.map((r,i)=>({
-  id:"p"+i, nome:r[0], gt:r[1], funcao: r[2] ? "Coordenador" : "Membro", cidade:r[3]||""
-}));
-
 /* ============================================================ ESTADO */
-let state = {comunicados:[], calendario:[], tarefas:[], membros:[], reunioes:[], pauta:[]};
+let state = {comunicados:[], calendario:[], reunioes:[], pauta:[]};
 let session = null;
 let activePage = "inicio";
 let activeGT = null;
@@ -832,11 +733,6 @@ function canEditForItem(item){
   return canEditGT(item.key);
 }
 function toggleForm(key){ openForms[key] = !openForms[key]; renderMain(); }
-function gtStats(gt){
-  const membros = state.membros.filter(m=>m.gt===gt).length;
-  const pendentes = state.tarefas.filter(t=>t.gt===gt && t.status!=="C").length;
-  return {membros, pendentes};
-}
 
 /* ============================================================ ÍCONES */
 const ICONS = {
@@ -866,7 +762,7 @@ function renderHeader(){
 }
 function renderNav(){
   const pages = [["inicio","Início"],["sobre","Sobre a RAC"],["comunicacao","Comunicação"],
-    ["calendario","Calendário"],["grupos","Grupos de Trabalho"],["reunioes","Reuniões"],
+    ["calendario","Calendário"],
     ["biblioteca","Biblioteca"],["coordenacao","Coordenação Geral"],
     ["consideracoes","Considerações e Aprovações"]];
   const novosCom = contarComunicadosNovos();
@@ -891,7 +787,6 @@ function renderMain(){
   else if(activePage==="sobre") renderSobre();
   else if(activePage==="comunicacao") renderComunicacao();
   else if(activePage==="calendario") renderCalendario();
-  else if(activePage==="grupos") activeGT ? renderGTDetail(activeGT) : renderGruposLanding();
   else if(activePage==="reunioes") renderReunioes();
   else if(activePage==="biblioteca") renderBiblioteca();
   else if(activePage==="coordenacao") renderCoordenacao();
@@ -903,9 +798,25 @@ function renderMain(){
 function renderInicio(){
   const hoje = new Date().toISOString().slice(0,10);
   const proximos = state.calendario.slice().sort((a,b)=>a.data.localeCompare(b.data))
-    .filter(e=>e.data>=hoje).slice(0,3);
+    .filter(e=>e.data>=hoje).slice(0,6);
   const recentes = state.comunicados.slice().sort((a,b)=>(b.data||"").localeCompare(a.data||"")).slice(0,2);
   const novosCom = contarComunicadosNovos();
+
+  const destaqueReunioes = `
+    <div class="card" style="border:2px solid var(--navy);margin-bottom:16px">
+      <div class="row-between" style="margin-bottom:10px">
+        <h2 style="margin:0;color:var(--navy);font-size:17px">Próximas reuniões</h2>
+        <a href="#" onclick="goPage('calendario');return false;" style="font-size:12px;font-weight:bold;color:var(--navy)">calendário completo →</a>
+      </div>
+      ${proximos.length ? proximos.map(ev=>{
+        const {d,m}=fmtData(ev.data); const meta=TIPOS[ev.tipo]||TIPOS.OUTRO;
+        const rel = rotuloRelativo(ev.data);
+        return `<div class="event"><div class="date" style="background:${rel&&rel.urgente?'var(--orange)':meta.cor+'22'}">
+          <span class="d" style="color:${rel&&rel.urgente?'#fff':meta.cor}">${d}</span><span class="m" style="${rel&&rel.urgente?'color:#fff':''}">${m}</span></div>
+          <div class="body"><div class="ttl">${esc(ev.titulo)}${rel?`<span class="relativo-tag${rel.urgente?' relativo-hoje':''}">${rel.texto}</span>`:''}</div>
+          <div class="sub"><span class="tag" style="background:${meta.cor}">${meta.sigla}</span>&nbsp;${meta.nome}</div></div></div>`;
+      }).join("") : `<div class="empty">Nenhum compromisso futuro cadastrado.</div>`}
+    </div>`;
 
   document.getElementById("main").innerHTML = `
     <div class="hero">
@@ -914,10 +825,9 @@ function renderInicio(){
       Indaiatuba, Monte Mor, Nova Odessa, Paulínia, Sumaré, Valinhos e Vinhedo.</p>
       <div class="stats">
         <div class="stat"><b>9</b><span>Administrações</span></div>
-        <div class="stat"><b>22</b><span>Grupos de trabalho</span></div>
-        <div class="stat"><b>${state.membros.length}</b><span>Membros ativos</span></div>
       </div>
     </div>
+    ${destaqueReunioes}
     ${novosCom>0 ? `<div class="card light" style="border-left:4px solid var(--orange);margin-bottom:14px">
       <strong style="color:var(--orange)">${novosCom} comunicado${novosCom>1?'s':''} novo${novosCom>1?'s':''}</strong>
       <span class="muted"> desde sua última visita —</span>
@@ -926,17 +836,7 @@ function renderInicio(){
     <div class="quicklinks">
       <button class="btn btn-navy" onclick="goPage('comunicacao')">Ver comunicados</button>
       <button class="btn btn-navy" onclick="goPage('calendario')">Ver calendário</button>
-      <button class="btn btn-navy" onclick="goPage('grupos')">Ver grupos de trabalho</button>
     </div>
-    <div class="subhead">Próximos compromissos</div>
-    ${proximos.length ? proximos.map(ev=>{
-      const {d,m}=fmtData(ev.data); const meta=TIPOS[ev.tipo]||TIPOS.OUTRO;
-      const rel = rotuloRelativo(ev.data);
-      return `<div class="event"><div class="date" style="background:${rel&&rel.urgente?'var(--orange)':meta.cor+'22'}">
-        <span class="d" style="color:${rel&&rel.urgente?'#fff':meta.cor}">${d}</span><span class="m" style="${rel&&rel.urgente?'color:#fff':''}">${m}</span></div>
-        <div class="body"><div class="ttl">${esc(ev.titulo)}${rel?`<span class="relativo-tag${rel.urgente?' relativo-hoje':''}">${rel.texto}</span>`:''}</div>
-        <div class="sub"><span class="tag" style="background:${meta.cor}">${meta.sigla}</span>&nbsp;${meta.nome}</div></div></div>`;
-    }).join("") : `<div class="empty">Nenhum compromisso futuro cadastrado.</div>`}
     <div class="subhead">Últimos comunicados</div>
     ${recentes.length ? recentes.map(c=>{
       const textoPuro = c.texto.replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim();
@@ -963,7 +863,7 @@ function renderSobre(){
 
       <h2>Estrutura de coordenação</h2>
       <p>O trabalho é organizado em 22 Grupos de Trabalho, reunidos em 3 áreas de coordenação e
-      7 grupos temáticos — veja o detalhe em <a href="#" onclick="goPage('grupos');return false;">Grupos de Trabalho</a>.</p>
+      7 grupos temáticos.</p>
 
       <h2>Reuniões de âmbito local — RML e RMA</h2>
       <p>Cada cidade organiza as suas, por isso não entram no calendário compartilhado da RAC — mas é
@@ -1303,160 +1203,6 @@ function excluirEvento(id){
   if(!confirm("Remover este compromisso?")) return;
   state.calendario = state.calendario.filter(c=>c.id!==id);
   persist("rac_calendario", state.calendario); renderMain();
-}
-
-/* ============================================================ GRUPOS DE TRABALHO */
-function renderGruposLanding(){
-  let body = "";
-  AREA_ORDER.forEach(area=>{
-    const gts = GT_LIST.filter(g=>AREAS[g]===area);
-    body += `<div class="area-block"><h2>${area}</h2><div class="coord">Coordenador da área: ${AREA_COORD[area]}</div>
-      <div class="gt-grid">`;
-    gts.forEach(gt=>{
-      const st = gtStats(gt);
-      body += `
-        <button class="gt-card" onclick="abrirGT('${gt}')">
-          <div class="nm">${gt}</div>
-          <div class="st"><span><b>${st.membros}</b> membros</span><span><b>${st.pendentes}</b> pendências</span></div>
-        </button>`;
-    });
-    body += `</div></div>`;
-  });
-  document.getElementById("main").innerHTML = `
-    <div class="section-head"><h1>Grupos de Trabalho</h1>
-      <p>Os 22 GTs da RAC, organizados pelas 3 áreas de coordenação. Toque em um grupo para ver equipe e pendências.</p></div>
-    ${body}`;
-}
-function abrirGT(gt){ activeGT=gt; renderMain(); window.scrollTo(0,0); }
-function voltarGrupos(){ activeGT=null; renderMain(); }
-
-function renderGTDetail(gt){
-  const editAqui = canEditGT(gt);
-  const membros = state.membros.filter(m=>m.gt===gt)
-    .sort((a,b)=> (a.funcao===b.funcao?0:(a.funcao!=="Membro"?-1:1)));
-  const tarefas = state.tarefas.filter(t=>t.gt===gt);
-  const coords = membros.filter(m=>m.funcao==="Coordenador").map(m=>m.nome);
-  const stLabel = {A:"A iniciar", E:"Em andamento", C:"Concluído"};
-
-  let membrosHTML = membros.length ? membros.map(m=>`
-    <div class="member">
-      <div><strong>${esc(m.nome)}</strong>${m.cidade?`<span class="loc"> · ${esc(m.cidade)}</span>`:""}</div>
-      ${editAqui ? `
-        <div class="edit-row">
-          <select onchange="mudarFuncao('${m.id}', this.value)" style="font-size:11px;padding:2px 4px">
-            <option value="Membro" ${m.funcao==="Membro"?"selected":""}>Membro</option>
-            <option value="Vice" ${m.funcao==="Vice"?"selected":""}>Vice-coordenador</option>
-            <option value="Coordenador" ${m.funcao==="Coordenador"?"selected":""}>Coordenador</option>
-          </select>
-          <a href="#" onclick="removerMembro('${m.id}');return false;" style="color:var(--red);font-size:11px">remover</a>
-        </div>` :
-        `<span class="fn fn-${m.funcao}">${m.funcao==="Coordenador"?"Coordenador":m.funcao==="Vice"?"Vice-coord.":"Membro"}</span>`}
-    </div>`).join("") : `<div class="empty" style="padding:12px">Nenhum membro cadastrado neste GT.</div>`;
-
-  let membrosForm = "";
-  if(editAqui){
-    membrosForm = `<div class="add-toggle"><button class="btn btn-ghost" style="font-size:11.5px" onclick="toggleForm('novoMembro')">+ Adicionar membro</button></div>`;
-    if(openForms.novoMembro){
-      membrosForm += `
-        <form class="inline" onsubmit="return criarMembro(event,'${gt}')">
-          <label>Nome</label><input id="mf_nome" required maxlength="80">
-          <label>Cidade</label><input id="mf_cidade" maxlength="30">
-          <label>Função</label>
-          <select id="mf_funcao">
-            <option value="Membro">Membro</option><option value="Vice">Vice-coordenador</option>
-            <option value="Coordenador">Coordenador</option>
-          </select>
-          <div class="form-actions">
-            <button class="btn btn-navy" type="submit">Adicionar</button>
-            <button class="btn btn-ghost" type="button" onclick="toggleForm('novoMembro')">Cancelar</button>
-          </div>
-        </form>`;
-    }
-  }
-
-  let tarefasHTML = tarefas.length ? tarefas.map(t=>`
-    <div class="task">
-      <div class="row-between">
-        <strong style="font-size:13px">${esc(t.titulo)}</strong>
-        ${editAqui ? `
-          <select onchange="mudarStatusTarefa('${t.id}', this.value)" style="font-size:11px;padding:2px 4px">
-            <option value="A" ${t.status==="A"?"selected":""}>A iniciar</option>
-            <option value="E" ${t.status==="E"?"selected":""}>Em andamento</option>
-            <option value="C" ${t.status==="C"?"selected":""}>Concluído</option>
-          </select>` : `<span class="status st-${t.status}">${stLabel[t.status]}</span>`}
-      </div>
-      <div class="muted" style="margin-top:3px">${esc(t.detalhe||"")}</div>
-      <div class="muted" style="margin-top:4px">${t.prazo?("Prazo: "+t.prazo+" · "):""}${esc(t.autor||"")}
-      ${editAqui?` · <a href="#" onclick="excluirTarefa('${t.id}');return false;" style="color:var(--red)">excluir</a>`:""}</div>
-    </div>`).join("") : `<div class="empty" style="padding:12px">Nenhuma pendência registrada.</div>`;
-
-  let tarefasForm = "";
-  if(editAqui){
-    tarefasForm = `<div class="add-toggle"><button class="btn btn-ghost" style="font-size:11.5px" onclick="toggleForm('novaTarefa')">+ Nova pendência</button></div>`;
-    if(openForms.novaTarefa){
-      tarefasForm += `
-        <form class="inline" onsubmit="return criarTarefa(event,'${gt}')">
-          <label>Título</label><input id="tf_titulo" required maxlength="90">
-          <label>Detalhe (opcional)</label><textarea id="tf_detalhe" maxlength="400"></textarea>
-          <label>Prazo (opcional)</label><input id="tf_prazo" type="date">
-          <div class="form-actions">
-            <button class="btn btn-navy" type="submit">Adicionar</button>
-            <button class="btn btn-ghost" type="button" onclick="toggleForm('novaTarefa')">Cancelar</button>
-          </div>
-        </form>`;
-    }
-  }
-
-  document.getElementById("main").innerHTML = `
-    <a class="crumb" onclick="voltarGrupos()">← Grupos de Trabalho</a>
-    <div class="gt-detail-head">
-      <h1>${gt}</h1>
-      <div class="grp">${GRUPOS[gt]} · Área ${AREAS[gt]}</div>
-      <div class="coord">${coords.length?("Coordenador"+(coords.length>1?"es":"")+": "+coords.join(", ")):"Sem coordenador designado — gerido pela área "+AREAS[gt]}</div>
-    </div>
-    <div class="subhead">Equipe</div>
-    ${membrosHTML}${membrosForm}
-    <div class="subhead">Pendências</div>
-    ${tarefasHTML}${tarefasForm}
-  `;
-}
-function mudarFuncao(id, funcao){
-  const m = state.membros.find(x=>x.id===id); if(!m) return;
-  m.funcao = funcao; persist("rac_membros", state.membros); renderMain();
-}
-function criarMembro(ev, gt){
-  ev.preventDefault();
-  const nome = document.getElementById("mf_nome").value.trim();
-  const cidade = document.getElementById("mf_cidade").value.trim();
-  const funcao = document.getElementById("mf_funcao").value;
-  if(!nome) return false;
-  state.membros.push({id:"p"+Date.now(), nome, gt, funcao, cidade});
-  persist("rac_membros", state.membros);
-  openForms.novoMembro = false; renderMain(); return false;
-}
-function removerMembro(id){
-  if(!confirm("Remover este membro do GT?")) return;
-  state.membros = state.membros.filter(m=>m.id!==id);
-  persist("rac_membros", state.membros); renderMain();
-}
-function mudarStatusTarefa(id, status){
-  const t = state.tarefas.find(x=>x.id===id); if(!t) return;
-  t.status = status; persist("rac_tarefas", state.tarefas); renderMain();
-}
-function criarTarefa(ev, gt){
-  ev.preventDefault();
-  const titulo = document.getElementById("tf_titulo").value.trim();
-  const detalhe = document.getElementById("tf_detalhe").value.trim();
-  const prazo = document.getElementById("tf_prazo").value;
-  if(!titulo) return false;
-  state.tarefas.push({id:"t"+Date.now(), gt, titulo, detalhe, status:"A", prazo, autor:session.label});
-  persist("rac_tarefas", state.tarefas);
-  openForms.novaTarefa = false; renderMain(); return false;
-}
-function excluirTarefa(id){
-  if(!confirm("Excluir esta pendência?")) return;
-  state.tarefas = state.tarefas.filter(t=>t.id!==id);
-  persist("rac_tarefas", state.tarefas); renderMain();
 }
 
 /* ============================================================ REUNIÕES */
@@ -1833,18 +1579,6 @@ function doLogout(){ session = null; openForms = {}; renderHeader(); renderMain(
 
 /* ============================================================ IMPORTAÇÃO EM LOTE */
 const IMPORT_FORMATS = {
-  membros: {
-    label: "Membros",
-    hint: "Uma linha por pessoa: Nome | Função | Cidade — Função: Membro, Vice ou Coordenador (opcional, padrão Membro).",
-    placeholder: "João da Silva | Membro | Campinas\nMaria Souza | Vice | Paulínia",
-    destino: "gt"
-  },
-  tarefas: {
-    label: "Tarefas / pendências",
-    hint: "Uma linha por pendência: Título | Detalhe (opcional) | Prazo AAAA-MM-DD (opcional).",
-    placeholder: "Regularizar Alvará de Funcionamento | Falta protocolar na prefeitura | 2026-10-30\nAtualizar AVCB | | ",
-    destino: "gt"
-  },
   calendario: {
     label: "Compromissos do calendário",
     hint: "Uma linha por compromisso: Data AAAA-MM-DD | Descrição | Tipo (opcional: RGA, RA, GG, RRM, GT-PRE, GT-ON, VP, VO, DOC ou OBRIGACAO para prazos fiscais/tributários — deixe em branco para 'Outro').",
@@ -1886,15 +1620,9 @@ function renderImportFields(){
   const tipo = document.getElementById("impTipo").value;
   const fmt = IMPORT_FORMATS[tipo];
   const wrap = document.getElementById("impDestinoWrap");
-  if(fmt.destino === "gt"){
-    wrap.innerHTML = `
-      <label style="display:block;font-size:11px;font-weight:bold;color:var(--navy);margin:8px 0 4px">Grupo de trabalho de destino</label>
-      <select id="impDestino">${GT_LIST.map(g=>`<option value="${g}">${g}</option>`).join("")}</select>`;
-  } else {
-    wrap.innerHTML = `
-      <label style="display:block;font-size:11px;font-weight:bold;color:var(--navy);margin:8px 0 4px">Publicar em</label>
-      <select id="impDestino">${targetOptionsHTML()}</select>`;
-  }
+  wrap.innerHTML = `
+    <label style="display:block;font-size:11px;font-weight:bold;color:var(--navy);margin:8px 0 4px">Publicar em</label>
+    <select id="impDestino">${targetOptionsHTML()}</select>`;
   document.getElementById("impHint").textContent = fmt.hint;
   document.getElementById("impLinhas").placeholder = fmt.placeholder;
   document.getElementById("impResultado").textContent = "";
@@ -1905,29 +1633,7 @@ function executarImportacao(){
   const linhas = raw.split("\n").map(l=>l.trim()).filter(l=>l.length);
   let ok = 0, falhou = 0;
 
-  if(tipo === "membros"){
-    const gt = document.getElementById("impDestino").value;
-    linhas.forEach(l=>{
-      const p = l.split("|").map(s=>s.trim());
-      if(!p[0]){ falhou++; return; }
-      const funcaoRaw = (p[1]||"Membro");
-      const funcao = ["Membro","Vice","Coordenador"].includes(funcaoRaw) ? funcaoRaw : "Membro";
-      state.membros.push({id:"p"+Date.now()+Math.random().toString(36).slice(2,6), nome:p[0], gt, funcao, cidade:p[2]||""});
-      ok++;
-    });
-    persist("rac_membros", state.membros);
-  } else if(tipo === "tarefas"){
-    const gt = document.getElementById("impDestino").value;
-    linhas.forEach(l=>{
-      const p = l.split("|").map(s=>s.trim());
-      if(!p[0]){ falhou++; return; }
-      const prazo = (p[2] && /^\d{4}-\d{2}-\d{2}$/.test(p[2])) ? p[2] : "";
-      state.tarefas.push({id:"t"+Date.now()+Math.random().toString(36).slice(2,6), gt, titulo:p[0],
-        detalhe:p[1]||"", status:"A", prazo, autor:session.label});
-      ok++;
-    });
-    persist("rac_tarefas", state.tarefas);
-  } else if(tipo === "calendario"){
+  if(tipo === "calendario"){
     const [scope,key] = document.getElementById("impDestino").value.split("|");
     linhas.forEach(l=>{
       const p = l.split("|").map(s=>s.trim());
@@ -1959,8 +1665,8 @@ function executarImportacao(){
 
 /* ============================================================ INIT */
 function loadSeedOnly(){
-  state = {comunicados:SEED_COMUNICADOS, calendario:SEED_CALENDARIO, tarefas:SEED_TAREFAS,
-    membros:SEED_MEMBROS, reunioes:SEED_REUNIOES, pauta:SEED_PAUTA};
+  state = {comunicados:SEED_COMUNICADOS, calendario:SEED_CALENDARIO,
+    reunioes:SEED_REUNIOES, pauta:SEED_PAUTA};
 }
 async function init(){
   ULTIMA_VISITA_ANTERIOR = getUltimaVisitaAnterior();
@@ -1974,16 +1680,14 @@ async function init(){
     }
   }, 5000);
   try{
-    const [com, cal, tar, mem, reu, pau] = await Promise.all([
+    const [com, cal, reu, pau] = await Promise.all([
       ensure("rac_comunicados", SEED_COMUNICADOS),
       ensure("rac_calendario", SEED_CALENDARIO),
-      ensure("rac_tarefas", SEED_TAREFAS),
-      ensure("rac_membros", SEED_MEMBROS),
       ensure("rac_reunioes", SEED_REUNIOES),
       ensure("rac_pauta", SEED_PAUTA)
     ]);
-    state.comunicados = com; state.calendario = cal; state.tarefas = tar;
-    state.membros = mem; state.reunioes = reu; state.pauta = pau;
+    state.comunicados = com; state.calendario = cal;
+    state.reunioes = reu; state.pauta = pau;
   }catch(e){
     console.error("Falha geral ao carregar dados — exibindo conteúdo inicial", e);
     loadSeedOnly(); showStorageWarning();
