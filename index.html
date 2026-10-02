@@ -488,13 +488,13 @@ const SEED_CALENDARIO = [
 
 const TIPOS_MATERIAL = ["Apresentação (PPTX)","Ata","Pauta","Ofício","Planilha","Outro"];
 const COORDENACAO_GERAL = [
-  {nome:"Eliel Granado", papel:"Coordenador da Regional"},
-  {nome:"Nilton Cesar Zeferino", papel:"Coordenador da Área Gestão"},
-  {nome:"Everton Samuel Nascimento", papel:"Coordenador da Área Patrimonial"},
-  {nome:"Gerson Zarpelão", papel:"Coordenador da Área Financeira"},
-  {nome:"Samuel Lino", papel:"Secretário"},
-  {nome:"Marcos Andrade", papel:"Secretário"},
-  {nome:"Luis Dias Mota Junior", papel:"Secretário"},
+  {papel:"Coordenador da Regional"},
+  {papel:"Coordenador da Área Gestão"},
+  {papel:"Coordenador da Área Patrimonial"},
+  {papel:"Coordenador da Área Financeira"},
+  {papel:"Secretário"},
+  {papel:"1º Vice-secretário"},
+  {papel:"2º Vice-secretário"},
 ];
 const SEED_PAUTA = [];
 
@@ -1361,7 +1361,7 @@ function renderBiblioteca(){
 function renderCoordenacao(){
   const acesso = canAccessCoordenacao();
   const rosterHTML = COORDENACAO_GERAL.map(p=>`
-    <div class="member"><div><strong>${esc(p.nome)}</strong></div><span class="muted">${esc(p.papel)}</span></div>
+    <div class="member"><div><strong>${esc(p.papel)}</strong></div></div>
   `).join("");
 
   const hoje = new Date().toISOString().slice(0,10);
